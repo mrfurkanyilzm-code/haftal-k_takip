@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LGS Koçluk & Günlük Takip Paneli</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased selection:bg-brand-500 selection:text-white pb-20">
+
+    <!-- Üst Bildirim (Toast) Alanı -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+
+    <!-- Onay Modalı (Alert/Confirm yerine özel modal) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-100 transform transition-all">
+            <div class="flex items-center gap-3 text-rose-600 mb-3">
+                <div class="p-2.5 bg-rose-50 rounded-xl">
+                    <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+                </div>
+                <h3 id="modal-title" class="text-lg font-bold text-slate-800">Emin misin?</h3>
+            </div>
+            <p id="modal-desc" class="text-sm text-slate-600 mb-6 leading-relaxed">Bu işlem geri alınamaz.</p>
+            <div class="flex items-center justify-end gap-3">
+                <button id="modal-cancel" class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">Vazgeç</button>
+                <button id="modal-confirm" class="px-4 py-2.5 rounded-xl text-sm font-semibold bg-rose-600 text-white hover:bg-rose-700 shadow-sm transition">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hedef Ayarlama Modalı -->
+    <div id="goal-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i data-lucide="target" class="w-5 h-5 text-brand-600"></i>
+                    Günlük Soru Hedefi
+                </h3>
+                <button id="close-goal-modal" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Koçunla belirlediğin günlük ortalama soru hedefini buradan güncelleyebilirsin.</p>
+            <div class="mb-5">
+                <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Günlük Hedef (Soru)</label>
+                <input type="number" id="daily-goal-input" min="10" max="1000" step="10" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none font-bold text-lg text-slate-800" placeholder="Örn: 120">
+            </div>
+            <button id="save-goal-btn" class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold shadow-md shadow-brand-500/20 transition">Hedefi Kaydet</button>
+        </div>
+    </div>
+
+    <!-- Üst Header -->
+    <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-600 to-violet-600 flex items-center justify-center text-white shadow-md shadow-brand-500/20">
+                    <i data-lucide="rocket" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-slate-900 text-base sm:text-lg leading-tight tracking-tight">LGS Hedef Takip</h1>
+                    <p class="text-xs text-slate-500 font-medium" id="current-date-display">Bugün</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Seri (Streak) Rozeti -->
+                <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200/80 text-amber-700 px-3 py-1.5 rounded-xl font-bold text-sm" title="Kesintisiz çalışma serisi">
+                    <i data-lucide="flame" class="w-4 h-4 fill-amber-500 text-amber-500"></i>
+                    <span id="streak-count">0</span>
+                    <span class="hidden sm:inline font-semibold text-xs text-amber-600">Gün Seri</span>
+                </div>
+
+                <!-- Hedef Ayarla Butonu -->
+                <button id="open-goal-btn" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-xl transition" title="Günlük Hedefi Düzenle">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ana İçerik -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-6 space-y-6">
+
+        <!-- Üst Özet Kartları (4'lü Grid) -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            <!-- Bugünkü Soru -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bugün Soru</span>
+                    <div class="p-2 bg-indigo-50 text-indigo-600 rounded-xl">
+                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="stat-today-questions" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0</span>
+                        <span class="text-xs font-medium text-slate-400">/ <span id="stat-goal-target">100</span></span>
+                    </div>
+                    <p id="stat-today-accuracy" class="text-xs font-medium text-emerald-600 mt-1">%0 Başarı Oranı</p>
+                </div>
+            </div>
+
+            <!-- Bugünkü Süre -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bugün Süre</span>
+                    <div class="p-2 bg-sky-50 text-sky-600 rounded-xl">
+                        <i data-lucide="clock" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="stat-today-time">0 dk</div>
+                    <p class="text-xs font-medium text-slate-400 mt-1" id="stat-today-hours">0.0 Saat</p>
+                </div>
+            </div>
+
+            <!-- Haftalık Toplam Soru -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bu Hafta Soru</span>
+                    <div class="p-2 bg-violet-50 text-violet-600 rounded-xl">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="stat-week-questions">0</div>
+                    <p class="text-xs font-medium text-slate-400 mt-1">Son 7 günlük toplam</p>
+                </div>
+            </div>
+
+            <!-- Haftalık Toplam Süre -->
+            <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bu Hafta Süre</span>
+                    <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
+                        <i data-lucide="hourglass" class="w-4 h-4"></i>
+                    </div>
+                </div>
+                <div>
+                    <div class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="stat-week-time">0 sa</div>
+                    <p class="text-xs font-medium text-slate-400 mt-1" id="stat-week-minutes">0 dakika</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Günlük Hedef İlerleme Barı & Koça Gönder Aksiyonu -->
+        <section class="bg-gradient-to-r from-brand-600 via-indigo-600 to-violet-600 rounded-2xl p-5 sm:p-6 text-white shadow-lg shadow-brand-500/15">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-semibold backdrop-blur-sm">Günlük Görev</span>
+                        <span id="goal-status-text" class="text-xs font-medium text-indigo-100">Hedefe adım adım!</span>
+                    </div>
+                    <h2 class="text-lg sm:text-xl font-bold">Bugünkü Soru Hedefi İlerlemen</h2>
+                </div>
+
+                <!-- Koça Gönder Butonları -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button id="copy-report-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-sm backdrop-blur-sm transition border border-white/20">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Özeti Kopyala</span>
+                    </button>
+                    <button id="whatsapp-send-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm shadow-md transition">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>Koçuma WhatsApp'tan Gönder</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- İlerleme Çubuğu -->
+            <div class="space-y-1.5">
+                <div class="flex justify-between text-xs font-semibold text-indigo-100">
+                    <span id="progress-label">0 / 100 Soru</span>
+                    <span id="progress-percent">%0</span>
+                </div>
+                <div class="w-full h-3.5 bg-black/20 rounded-full overflow-hidden p-0.5">
+                    <div id="daily-progress-bar" class="h-full bg-gradient-to-r from-amber-300 to-emerald-300 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orta Bölüm: Veri Giriş Formu ve Ders Bazlı Dağılım -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Sol Taraf: Çalışma Ekleme / Düzenleme Formu (7 Kolon) -->
+            <section class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <div class="p-2 bg-brand-50 text-brand-600 rounded-xl">
+                            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                        </div>
+                        <span id="form-title">Yeni Çalışma Kaydı Ekle</span>
+                    </h3>
+                    <button id="cancel-edit-btn" class="hidden text-xs font-semibold text-slate-500 hover:text-slate-700 bg-slate-100 px-3 py-1.5 rounded-lg">
+                        Düzenlemeyi İptal Et
+                    </button>
+                </div>
+
+                <form id="study-form" class="space-y-4">
+                    <input type="hidden" id="edit-record-id" value="">
+
+                    <!-- Ders Seçimi (Buton Grid) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ders Seç</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="subject-selector">
+                            <!-- JS ile doldurulacak -->
+                        </div>
+                        <input type="hidden" id="selected-subject" value="Matematik" required>
+                    </div>
+
+                    <!-- Tarih ve Süre -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="study-date" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tarih</label>
+                            <input type="date" id="study-date" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm font-medium text-slate-800 bg-slate-50/50">
+                        </div>
+
+                        <div>
+                            <label for="study-duration" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Çalışma Süresi (Dakika)</label>
+                            <div class="relative">
+                                <input type="number" id="study-duration" min="1" max="600" placeholder="Örn: 45" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm font-bold text-slate-800">
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">dk</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Doğru / Yanlış / Boş Girişi -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/60 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Soru Sayıları</span>
+                            <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-lg" id="form-total-preview">Toplam: 0 Soru</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label for="correct-count" class="block text-xs font-semibold text-emerald-700 mb-1">Doğru</label>
+                                <input type="number" id="correct-count" min="0" max="500" value="0" required class="w-full px-3 py-2 rounded-xl border border-emerald-200 bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm font-bold text-emerald-700 text-center">
+                            </div>
+                            <div>
+                                <label for="wrong-count" class="block text-xs font-semibold text-rose-700 mb-1">Yanlış</label>
+                                <input type="number" id="wrong-count" min="0" max="500" value="0" required class="w-full px-3 py-2 rounded-xl border border-rose-200 bg-white focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 outline-none text-sm font-bold text-rose-700 text-center">
+                            </div>
+                            <div>
+                                <label for="empty-count" class="block text-xs font-semibold text-slate-600 mb-1">Boş</label>
+                                <input type="number" id="empty-count" min="0" max="500" value="0" class="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:border-slate-400 focus:ring-2 focus:ring-slate-400/20 outline-none text-sm font-bold text-slate-700 text-center">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Konu / Not (İsteğe Bağlı) -->
+                    <div>
+                        <label for="study-note" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Konu veya Kısa Not (İsteğe Bağlı)</label>
+                        <input type="text" id="study-note" maxlength="80" placeholder="Örn: Üslü İfadeler yeni nesil test, 2 yanlış analizi yapıldı" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none text-sm text-slate-800">
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full py-3.5 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-md shadow-brand-500/20 transition flex items-center justify-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        <span id="submit-btn-text">Çalışmayı Kaydet</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Sağ Taraf: Ders Bazlı İlerleme & Rozetler (5 Kolon) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Ders Bazlı Dağılım -->
+                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="pie-chart" class="w-5 h-5 text-brand-600"></i>
+                            Ders Bazlı Soru Dağılımı
+                        </h3>
+                        <select id="chart-filter" class="text-xs font-semibold bg-slate-100 text-slate-700 px-2.5 py-1.5 rounded-lg outline-none border border-slate-200">
+                            <option value="today">Bugün</option>
+                            <option value="week" selected>Bu Hafta</option>
+                            <option value="all">Tüm Zamanlar</option>
+                        </select>
+                    </div>
+
+                    <div id="subject-progress-list" class="space-y-3.5">
+                        <!-- JS ile ders barları doldurulacak -->
+                    </div>
+                </section>
+
+                <!-- Başarı Rozetleri (Oyunlaştırma) -->
+                <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="award" class="w-5 h-5 text-amber-500"></i>
+                            Başarı Rozetlerim
+                        </h3>
+                        <span id="badge-counter" class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg">0 / 6</span>
+                    </div>
+                    <div id="badges-grid" class="grid grid-cols-3 gap-2.5">
+                        <!-- JS ile rozetler doldurulacak -->
+                    </div>
+                </section>
+
+            </div>
+        </div>
+
+        <!-- Alt Bölüm: Son Girilen Çalışma Kayıtları -->
+        <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <div>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="history" class="w-5 h-5 text-brand-600"></i>
+                        Son Çalışma Kayıtları
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Kayıtlarını düzenleyebilir veya silebilirsin.</p>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <select id="history-subject-filter" class="text-xs font-semibold bg-slate-50 border border-slate-200 text-slate-700 px-3 py-2 rounded-xl outline-none">
+                        <option value="ALL">Tüm Dersler</option>
+                    </select>
+                    <button id="reset-all-btn" class="text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Verileri Sıfırla</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kayıt Listesi -->
+            <div id="records-list" class="space-y-2.5">
+                <!-- JS ile doldurulacak -->
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- SABİTLER VE DERS TANIMLARI ---
+        const SUBJECTS = [
+            { name: 'Matematik', color: 'bg-indigo-500', text: 'text-indigo-700', bgLight: 'bg-indigo-50', border: 'border-indigo-200', icon: 'calculator' },
+            { name: 'Fen Bilimleri', color: 'bg-emerald-500', text: 'text-emerald-700', bgLight: 'bg-emerald-50', border: 'border-emerald-200', icon: 'flask-conical' },
+            { name: 'Türkçe', color: 'bg-rose-500', text: 'text-rose-700', bgLight: 'bg-rose-50', border: 'border-rose-200', icon: 'book-open' },
+            { name: 'T.C. İnkılap Tarihi', color: 'bg-amber-500', text: 'text-amber-700', bgLight: 'bg-amber-50', border: 'border-amber-200', icon: 'landmark' },
+            { name: 'İngilizce', color: 'bg-sky-500', text: 'text-sky-700', bgLight: 'bg-sky-50', border: 'border-sky-200', icon: 'languages' },
+            { name: 'Din Kültürü', color: 'bg-violet-500', text: 'text-violet-700', bgLight: 'bg-violet-50', border: 'border-violet-200', icon: 'sparkles' }
+        ];
+
+        const STORAGE_KEY = 'lgs_coach_tracker_records_v1';
+        const GOAL_KEY = 'lgs_coach_tracker_goal_v1';
+
+        // --- UYGULAMA DURUMU (STATE) ---
+        let records = [];
+        let dailyGoal = 100;
+        let pendingConfirmAction = null;
+
+        // --- YARDIMCI TARİH FONKSİYONLARI ---
+        function getTodayStr() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset() * 60000;
+            return new Date(now.getTime() - offset).toISOString().split('T')[0];
+        }
+
+        function formatDateTR(dateStr) {
+            if (!dateStr) return '';
+            const today = getTodayStr();
+            const yesterdayDate = new Date();
+            yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+            const offset = yesterdayDate.getTimezoneOffset() * 60000;
+            const yesterday = new Date(yesterdayDate.getTime() - offset).toISOString().split('T')[0];
+
+            if (dateStr === today) return 'Bugün';
+            if (dateStr === yesterday) return 'Dün';
+
+            const parts = dateStr.split('-');
+            const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+            return `${parseInt(parts[2], 10)} ${months[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
+        }
+
+        function isWithinLast7Days(dateStr) {
+            const target = new Date(dateStr + 'T00:00:00');
+            const today = new Date(getTodayStr() + 'T00:00:00');
+            const diffDays = (today - target) / (1000 * 60 * 60 * 24);
+            return diffDays >= 0 && diffDays < 7;
+        }
+
+        function formatDuration(minutes) {
+            if (minutes < 60) return `${minutes} dk`;
+            const hrs = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return mins > 0 ? `${hrs} sa ${mins} dk` : `${hrs} saat`;
+        }
+
+        // --- BİLDİRİM (TOAST) SİSTEMİ ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-slate-900 text-white' : (type === 'error' ? 'bg-rose-600 text-white' : 'bg-brand-600 text-white');
+            const iconName = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
+
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-sm font-medium transform transition-all duration-300 translate-y-[-10px] opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-[-10px]', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-[-10px]');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- ÖZEL ONAY MODALI ---
+        function openConfirmModal(title, desc, confirmBtnText, onConfirm) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-desc').textContent = desc;
+            document.getElementById('modal-confirm').textContent = confirmBtnText;
+            pendingConfirmAction = onConfirm;
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            pendingConfirmAction = null;
+        }
+
+        // --- VERİ YÜKLEME VE KAYDETME ---
+        function loadData() {
+            try {
+                const savedRecords = localStorage.getItem(STORAGE_KEY);
+                const savedGoal = localStorage.getItem(GOAL_KEY);
+                records = savedRecords ? JSON.parse(savedRecords) : [];
+                dailyGoal = savedGoal ? parseInt(savedGoal, 10) : 100;
+            } catch (e) {
+                console.error('Veri okuma hatası:', e);
+                records = [];
+                dailyGoal = 100;
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                localStorage.setItem(GOAL_KEY, dailyGoal.toString());
+            } catch (e) {
+                showToast('Veriler kaydedilirken bir hata oluştu.', 'error');
+            }
+        }
+
+        // --- SERİ (STREAK) HESAPLAMA ---
+        function calculateStreak() {
+            if (records.length === 0) return 0;
+            const uniqueDates = [...new Set(records.map(r => r.date))].sort().reverse();
+            const today = getTodayStr();
+
+            const yesterdayDate = new Date();
+            yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+            const offset = yesterdayDate.getTimezoneOffset() * 60000;
+            const yesterday = new Date(yesterdayDate.getTime() - offset).toISOString().split('T')[0];
+
+            // Seri bugün veya dün kayıt girildiyse devam eder
+            if (uniqueDates[0] !== today && uniqueDates[0] !== yesterday) {
+                return 0;
+            }
+
+            let streak = 1;
+            let currentDate = new Date(uniqueDates[0] + 'T00:00:00');
+
+            for (let i = 1; i < uniqueDates.length; i++) {
+                const prevDate = new Date(uniqueDates[i] + 'T00:00:00');
+                const diff = (currentDate - prevDate) / (1000 * 60 * 60 * 24);
+                if (diff === 1) {
+                    streak++;
+                    currentDate = prevDate;
+                } else {
+                    break;
+                }
+            }
+            return streak;
+        }
+
+        // --- DERS SEÇİCİ BUTONLARI OLUŞTURMA ---
+        function renderSubjectSelector() {
+            const container = document.getElementById('subject-selector');
+            const selected = document.getElementById('selected-subject').value;
+            const filterSelect = document.getElementById('history-subject-filter');
+
+            // Filtre dropdown'ını sadece 1 kez doldur
+            if (filterSelect.options.length === 1) {
+                SUBJECTS.forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub.name;
+                    opt.textContent = sub.name;
+                    filterSelect.appendChild(opt);
+                });
+            }
+
+            container.innerHTML = SUBJECTS.map(sub => {
+                const isSelected = sub.name === selected;
+                return `
+                    <button type="button" onclick="selectSubject('${sub.name}')"
+                        class="flex items-center gap-2 p-2.5 rounded-xl border text-left transition-all ${isSelected
+                            ? `${sub.bgLight} ${sub.border} ${sub.text} ring-2 ring-brand-500/30 font-bold shadow-xs`
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-medium'}">
+                        <i data-lucide="${sub.icon}" class="w-4 h-4 shrink-0"></i>
+                        <span class="text-xs truncate">${sub.name}</span>
+                    </button>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function selectSubject(subjectName) {
+            document.getElementById('selected-subject').value = subjectName;
+            renderSubjectSelector();
+        }
+
+        // --- İSTATİSTİKLERİ VE İLERLEME BARINI GÜNCELLEME ---
+        function renderStats() {
+            const today = getTodayStr();
+            const todayRecords = records.filter(r => r.date === today);
+            const weekRecords = records.filter(r => isWithinLast7Days(r.date));
+
+            // Bugün Hesaplamaları
+            const todayTotalQ = todayRecords.reduce((sum, r) => sum + r.total, 0);
+            const todayCorrectQ = todayRecords.reduce((sum, r) => sum + r.correct, 0);
+            const todayMinutes = todayRecords.reduce((sum, r) => sum + r.duration, 0);
+            const todayAccuracy = todayTotalQ > 0 ? Math.round((todayCorrectQ / todayTotalQ) * 100) : 0;
+
+            // Haftalık Hesaplamalar
+            const weekTotalQ = weekRecords.reduce((sum, r) => sum + r.total, 0);
+            const weekMinutes = weekRecords.reduce((sum, r) => sum + r.duration, 0);
+
+            // Seri
+            const streak = calculateStreak();
+            document.getElementById('streak-count').textContent = streak;
+
+            // Üst Kartlar
+            document.getElementById('stat-today-questions').textContent = todayTotalQ;
+            document.getElementById('stat-goal-target').textContent = dailyGoal;
+            document.getElementById('stat-today-accuracy').textContent = `%${todayAccuracy} Başarı Oranı`;
+
+            document.getElementById('stat-today-time').textContent = formatDuration(todayMinutes);
+            document.getElementById('stat-today-hours').textContent = `${(todayMinutes / 60).toFixed(1)} Saat`;
+
+            document.getElementById('stat-week-questions').textContent = weekTotalQ;
+            document.getElementById('stat-week-time').textContent = `${(weekMinutes / 60).toFixed(1)} sa`;
+            document.getElementById('stat-week-minutes').textContent = `${weekMinutes} dakika`;
+
+            // Günlük Hedef Barı
+            const percent = Math.min(100, Math.round((todayTotalQ / dailyGoal) * 100));
+            document.getElementById('progress-label').textContent = `${todayTotalQ} / ${dailyGoal} Soru`;
+            document.getElementById('progress-percent').textContent = `%${percent}`;
+            document.getElementById('daily-progress-bar').style.width = `${percent}%`;
+
+            const statusEl = document.getElementById('goal-status-text');
+            if (todayTotalQ >= dailyGoal) {
+                statusEl.textContent = 'Harikasın! Günlük hedef tamamlandı 🎉';
+            } else if (todayTotalQ > 0) {
+                statusEl.textContent = `Hedefe ${dailyGoal - todayTotalQ} soru kaldı, devam!`;
+            } else {
+                statusEl.textContent = 'Bugünkü ilk kaydını girerek seriyi başlat!';
+            }
+        }
+
+        // --- DERS BAZLI İLERLEME BARLARI ---
+        function renderSubjectBreakdown() {
+            const filter = document.getElementById('chart-filter').value;
+            const today = getTodayStr();
+
+            let filtered = records;
+            if (filter === 'today') {
+                filtered = records.filter(r => r.date === today);
+            } else if (filter === 'week') {
+                filtered = records.filter(r => isWithinLast7Days(r.date));
+            }
+
+            const totalAllSubjects = filtered.reduce((sum, r) => sum + r.total, 0);
+            const container = document.getElementById('subject-progress-list');
+
+            container.innerHTML = SUBJECTS.map(sub => {
+                const subRecords = filtered.filter(r => r.subject === sub.name);
+                const subTotal = subRecords.reduce((sum, r) => sum + r.total, 0);
+                const subCorrect = subRecords.reduce((sum, r) => sum + r.correct, 0);
+                const subDuration = subRecords.reduce((sum, r) => sum + r.duration, 0);
+                const barPercent = totalAllSubjects > 0 ? Math.round((subTotal / totalAllSubjects) * 100) : 0;
+
+                return `
+                    <div>
+                        <div class="flex items-center justify-between text-xs mb-1">
+                            <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full ${sub.color}"></span>
+                                ${sub.name}
+                            </span>
+                            <span class="font-semibold text-slate-600">
+                                <strong class="text-slate-900">${subTotal}</strong> soru
+                                <span class="text-slate-400 text-[11px]">(${subCorrect}D • ${subDuration}dk)</span>
+                            </span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full ${sub.color} rounded-full transition-all duration-500" style="width: ${barPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- ROZET SİSTEMİ (OYUNLAŞTIRMA) ---
+        function renderBadges() {
+            const totalQuestionsAll = records.reduce((sum, r) => sum + r.total, 0);
+            const mathTotal = records.filter(r => r.subject === 'Matematik').reduce((sum, r) => sum + r.total, 0);
+            const streak = calculateStreak();
+            const todayTotal = records.filter(r => r.date === getTodayStr()).reduce((sum, r) => sum + r.total, 0);
+            const uniqueSubjectsToday = new Set(records.filter(r => r.date === getTodayStr()).map(r => r.subject)).size;
+
+            const badges = [
+                { id: 'first', title: 'İlk Adım', desc: 'İlk çalışma kaydını girdin', unlocked: records.length >= 1, icon: 'star' },
+                { id: 'goal', title: 'Hedef Avcısı', desc: 'Günlük soru hedefini tamamladın', unlocked: todayTotal >= dailyGoal, icon: 'target' },
+                { id: 'streak3', title: '3 Gün Seri', desc: '3 gün üst üste çalıştın', unlocked: streak >= 3, icon: 'flame' },
+                { id: 'math100', title: 'Matematikçi', desc: 'Toplam 100 Matematik sorusu', unlocked: mathTotal >= 100, icon: 'calculator' },
+                { id: 'allrounder', title: 'Çok Yönlü', desc: 'Aynı gün 3+ farklı ders çalıştın', unlocked: uniqueSubjectsToday >= 3, icon: 'layers' },
+                { id: 'club500', title: '500 Kulübü', desc: 'Toplam 500 soruya ulaştın', unlocked: totalQuestionsAll >= 500, icon: 'trophy' }
+            ];
+
+            const unlockedCount = badges.filter(b => b.unlocked).length;
+            document.getElementById('badge-counter').textContent = `${unlockedCount} / ${badges.length}`;
+
+            const grid = document.getElementById('badges-grid');
+            grid.innerHTML = badges.map(b => `
+                <div class="p-2.5 rounded-xl border text-center transition-all ${b.unlocked
+                    ? 'bg-amber-50/70 border-amber-200 text-amber-900 shadow-xs'
+                    : 'bg-slate-50 border-slate-200/70 text-slate-400 opacity-60 grayscale'}" title="${b.desc}">
+                    <div class="w-8 h-8 mx-auto mb-1.5 rounded-full flex items-center justify-center ${b.unlocked ? 'bg-amber-400 text-white shadow-xs' : 'bg-slate-200 text-slate-400'}">
+                        <i data-lucide="${b.icon}" class="w-4 h-4"></i>
+                    </div>
+                    <div class="text-[11px] font-bold leading-tight">${b.title}</div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- KAYIT LİSTESİ RENDER ---
+        function renderRecordsList() {
+            const filterSubject = document.getElementById('history-subject-filter').value;
+            const container = document.getElementById('records-list');
+
+            let filtered = [...records].sort((a, b) => {
+                if (b.date !== a.date) return b.date.localeCompare(a.date);
+                return b.createdAt - a.createdAt;
+            });
+
+            if (filterSubject !== 'ALL') {
+                filtered = filtered.filter(r => r.subject === filterSubject);
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 px-4 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                        <div class="w-12 h-12 bg-white rounded-2xl shadow-xs flex items-center justify-center mx-auto mb-3 text-slate-400">
+                            <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+                        </div>
+                        <p class="text-sm font-bold text-slate-700">Henüz çalışma kaydı bulunmuyor</p>
+                        <p class="text-xs text-slate-500 mt-1">Yukarıdaki formdan bugünkü çözdüğün soruları ekleyerek başla!</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = filtered.slice(0, 30).map(rec => {
+                const subObj = SUBJECTS.find(s => s.name === rec.subject) || SUBJECTS[0];
+                return `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border border-slate-200/80 hover:border-brand-200 bg-white hover:bg-slate-50/50 transition">
+                        <div class="flex items-start sm:items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl ${subObj.bgLight} ${subObj.text} flex items-center justify-center shrink-0">
+                                <i data-lucide="${subObj.icon}" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="font-bold text-sm text-slate-900">${rec.subject}</span>
+                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">${formatDateTR(rec.date)}</span>
+                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-sky-50 text-sky-700 flex items-center gap-1">
+                                        <i data-lucide="clock" class="w-3 h-3"></i> ${rec.duration} dk
+                                    </span>
+                                </div>
+                                ${rec.note ? `<p class="text-xs text-slate-500 mt-1">${rec.note}</p>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-2.5 sm:pt-0 border-slate-100">
+                            <div class="flex items-center gap-1.5 text-xs font-bold">
+                                <span class="px-2.5 py-1 rounded-lg bg-slate-900 text-white">${rec.total} Soru</span>
+                                <span class="px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700">${rec.correct}D</span>
+                                <span class="px-2 py-1 rounded-lg bg-rose-50 text-rose-700">${rec.wrong}Y</span>
+                                ${rec.empty > 0 ? `<span class="px-2 py-1 rounded-lg bg-slate-100 text-slate-600">${rec.empty}B</span>` : ''}
+                            </div>
+
+                            <div class="flex items-center gap-1">
+                                <button onclick="editRecord('${rec.id}')" class="p-2 text-slate-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition" title="Düzenle">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteRecord('${rec.id}')" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Sil">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // --- TÜM ARAYÜZÜ YENİLE ---
+        function refreshUI() {
+            renderStats();
+            renderSubjectBreakdown();
+            renderBadges();
+            renderRecordsList();
+        }
+
+        // --- FORM İŞLEMLERİ ---
+        function updateFormTotalPreview() {
+            const c = parseInt(document.getElementById('correct-count').value, 10) || 0;
+            const w = parseInt(document.getElementById('wrong-count').value, 10) || 0;
+            const e = parseInt(document.getElementById('empty-count').value, 10) || 0;
+            document.getElementById('form-total-preview').textContent = `Toplam: ${c + w + e} Soru`;
+        }
+
+        function resetForm() {
+            document.getElementById('study-form').reset();
+            document.getElementById('edit-record-id').value = '';
+            document.getElementById('study-date').value = getTodayStr();
+            document.getElementById('correct-count').value = 0;
+            document.getElementById('wrong-count').value = 0;
+            document.getElementById('empty-count').value = 0;
+            document.getElementById('form-title').textContent = 'Yeni Çalışma Kaydı Ekle';
+            document.getElementById('submit-btn-text').textContent = 'Çalışmayı Kaydet';
+            document.getElementById('cancel-edit-btn').classList.add('hidden');
+            updateFormTotalPreview();
+        }
+
+        function editRecord(id) {
+            const rec = records.find(r => r.id === id);
+            if (!rec) return;
+
+            document.getElementById('edit-record-id').value = rec.id;
+            selectSubject(rec.subject);
+            document.getElementById('study-date').value = rec.date;
+            document.getElementById('study-duration').value = rec.duration;
+            document.getElementById('correct-count').value = rec.correct;
+            document.getElementById('wrong-count').value = rec.wrong;
+            document.getElementById('empty-count').value = rec.empty || 0;
+            document.getElementById('study-note').value = rec.note || '';
+
+            document.getElementById('form-title').textContent = 'Çalışma Kaydını Düzenle';
+            document.getElementById('submit-btn-text').textContent = 'Değişiklikleri Güncelle';
+            document.getElementById('cancel-edit-btn').classList.remove('hidden');
+            updateFormTotalPreview();
+
+            document.getElementById('study-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function deleteRecord(id) {
+            openConfirmModal(
+                'Kaydı Sil',
+                'Bu çalışma kaydını silmek istediğine emin misin?',
+                'Evet, Sil',
+                () => {
+                    records = records.filter(r => r.id !== id);
+                    saveData();
+                    refreshUI();
+                    showToast('Kayıt silindi.');
+                }
+            );
+        }
+
+        // --- KOÇA WHATSAPP RAPORU OLUŞTURMA ---
+        function generateDailyReportText() {
+            const today = getTodayStr();
+            const todayRecords = records.filter(r => r.date === today);
+            const streak = calculateStreak();
+
+            const dateFormatted = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            if (todayRecords.length === 0) {
+                return `Merhaba Hocam! 👋\n📅 *${dateFormatted}* LGS Günlük Raporum:\nBugün için henüz sisteme soru girişi yapmadım. Birazdan çalışmaya başlıyorum! 💪`;
+            }
+
+            const totalQ = todayRecords.reduce((s, r) => s + r.total, 0);
+            const totalC = todayRecords.reduce((s, r) => s + r.correct, 0);
+            const totalW = todayRecords.reduce((s, r) => s + r.wrong, 0);
+            const totalMin = todayRecords.reduce((s, r) => s + r.duration, 0);
+
+            let lines = [
+                `Merhaba Hocam! 👋`,
+                `📅 *${dateFormatted} LGS Günlük Raporum*`,
+                `🔥 Kesintisiz Seri: *${streak} Gün*`,
+                `⏱️ Toplam Süre: *${formatDuration(totalMin)}*`,
+                `📝 Toplam Soru: *${totalQ} Soru* (${totalC} Doğru / ${totalW} Yanlış)`,
+                `🎯 Günlük Hedef: *${totalQ} / ${dailyGoal}*`,
+                ``,
+                `📚 *Ders Detayları:*`
+            ];
+
+            SUBJECTS.forEach(sub => {
+                const subRecs = todayRecords.filter(r => r.subject === sub.name);
+                if (subRecs.length > 0) {
+                    const q = subRecs.reduce((s, r) => s + r.total, 0);
+                    const c = subRecs.reduce((s, r) => s + r.correct, 0);
+                    const w = subRecs.reduce((s, r) => s + r.wrong, 0);
+                    const d = subRecs.reduce((s, r) => s + r.duration, 0);
+                    lines.push(`• *${sub.name}:* ${q} soru (${c}D/${w}Y) - ${d} dk`);
+                }
+            });
+
+            const notes = todayRecords.filter(r => r.note).map(r => `- ${r.subject}: ${r.note}`);
+            if (notes.length > 0) {
+                lines.push(``, `📌 *Notlarım:*`, ...notes);
+            }
+
+            return lines.join('\n');
+        }
+
+        function copyTextFallback(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Günlük özet panoya kopyalandı! WhatsApp’a yapıştırabilirsin.');
+            } catch (err) {
+                showToast('Kopyalama başarısız oldu.', 'error');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // --- OLAY DİNLEYİCİLERİ (EVENT LISTENERS) ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+
+            // Üst tarih yazısı
+            const nowStr = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('current-date-display').textContent = nowStr;
+            document.getElementById('study-date').value = getTodayStr();
+
+            renderSubjectSelector();
+            refreshUI();
+
+            // Soru sayısı canlı önizleme
+            ['correct-count', 'wrong-count', 'empty-count'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateFormTotalPreview);
+            });
+
+            // Form gönderimi
+            document.getElementById('study-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const editId = document.getElementById('edit-record-id').value;
+                const subject = document.getElementById('selected-subject').value;
+                const date = document.getElementById('study-date').value;
+                const duration = parseInt(document.getElementById('study-duration').value, 10) || 0;
+                const correct = parseInt(document.getElementById('correct-count').value, 10) || 0;
+                const wrong = parseInt(document.getElementById('wrong-count').value, 10) || 0;
+                const empty = parseInt(document.getElementById('empty-count').value, 10) || 0;
+                const note = document.getElementById('study-note').value.trim();
+                const total = correct + wrong + empty;
+
+                if (duration <= 0) {
+                    showToast('Lütfen geçerli bir çalışma süresi (dakika) gir.', 'error');
+                    return;
+                }
+                if (total <= 0) {
+                    showToast('En az 1 soru (Doğru, Yanlış veya Boş) girmelisin.', 'error');
+                    return;
+                }
+
+                if (editId) {
+                    const idx = records.findIndex(r => r.id === editId);
+                    if (idx !== -1) {
+                        records[idx] = { ...records[idx], subject, date, duration, correct, wrong, empty, total, note };
+                        showToast('Çalışma kaydı güncellendi!');
+                    }
+                } else {
+                    records.push({
+                        id: 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                        subject,
+                        date,
+                        duration,
+                        correct,
+                        wrong,
+                        empty,
+                        total,
+                        note,
+                        createdAt: Date.now()
+                    });
+                    showToast('Harika! Çalışman kaydedildi 🎉');
+                }
+
+                saveData();
+                resetForm();
+                refreshUI();
+            });
+
+            // Düzenleme iptal
+            document.getElementById('cancel-edit-btn').addEventListener('click', resetForm);
+
+            // Filtre değişiklikleri
+            document.getElementById('chart-filter').addEventListener('change', renderSubjectBreakdown);
+            document.getElementById('history-subject-filter').addEventListener('change', renderRecordsList);
+
+            // Rapor Kopyala & WhatsApp Gönder
+            document.getElementById('copy-report-btn').addEventListener('click', () => {
+                const report = generateDailyReportText();
+                copyTextFallback(report);
+            });
+
+            document.getElementById('whatsapp-send-btn').addEventListener('click', () => {
+                const report = generateDailyReportText();
+                const encoded = encodeURIComponent(report);
+                window.open(`https://wa.me/?text=${encoded}`, '_blank');
+            });
+
+            // Hedef Modalı İşlemleri
+            const goalModal = document.getElementById('goal-modal');
+            document.getElementById('open-goal-btn').addEventListener('click', () => {
+                document.getElementById('daily-goal-input').value = dailyGoal;
+                goalModal.classList.remove('hidden');
+                goalModal.classList.add('flex');
+            });
+
+            document.getElementById('close-goal-modal').addEventListener('click', () => {
+                goalModal.classList.add('hidden');
+                goalModal.classList.remove('flex');
+            });
+
+            document.getElementById('save-goal-btn').addEventListener('click', () => {
+                const val = parseInt(document.getElementById('daily-goal-input').value, 10);
+                if (val && val >= 10 && val <= 1000) {
+                    dailyGoal = val;
+                    saveData();
+                    refreshUI();
+                    goalModal.classList.add('hidden');
+                    goalModal.classList.remove('flex');
+                    showToast(`Günlük hedef ${dailyGoal} soru olarak güncellendi!`);
+                } else {
+                    showToast('Lütfen 10 ile 1000 arasında bir değer gir.', 'error');
+                }
+            });
+
+            // Tüm Verileri Sıfırla
+            document.getElementById('reset-all-btn').addEventListener('click', () => {
+                openConfirmModal(
+                    'Tüm Verileri Sıfırla',
+                    'Bugüne kadar girdiğin tüm soru ve süre kayıtları kalıcı olarak silinecek. Emin misin?',
+                    'Tümünü Sil',
+                    () => {
+                        records = [];
+                        saveData();
+                        resetForm();
+                        refreshUI();
+                        showToast('Tüm veriler sıfırlandı.');
+                    }
+                );
+            });
+
+            // Onay Modal Butonları
+            document.getElementById('modal-cancel').addEventListener('click', closeConfirmModal);
+            document.getElementById('modal-confirm').addEventListener('click', () => {
+                if (typeof pendingConfirmAction === 'function') {
+                    pendingConfirmAction();
+                }
+                closeConfirmModal();
+            });
+        });
+    </script>
+</body>
+</html>

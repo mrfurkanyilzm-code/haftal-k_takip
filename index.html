@@ -142,21 +142,21 @@
             <!-- Haftalık Toplam Soru -->
             <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bu Hafta Soru</span>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Seçili Hafta Soru</span>
                     <div class="p-2 bg-violet-50 text-violet-600 rounded-xl">
                         <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
                     </div>
                 </div>
                 <div>
                     <div class="text-2xl sm:text-3xl font-extrabold text-slate-900" id="stat-week-questions">0</div>
-                    <p class="text-xs font-medium text-slate-400 mt-1">Son 7 günlük toplam</p>
+                    <p class="text-xs font-medium text-violet-600 mt-1" id="stat-week-range-q">16 - 22 Kasım</p>
                 </div>
             </div>
 
             <!-- Haftalık Toplam Süre -->
             <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Bu Hafta Süre</span>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Seçili Hafta Süre</span>
                     <div class="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
                         <i data-lucide="hourglass" class="w-4 h-4"></i>
                     </div>
@@ -180,14 +180,18 @@
                 </div>
 
                 <!-- Koça Gönder Butonları -->
-                <div class="flex flex-wrap items-center gap-2.5">
-                    <button id="copy-report-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-sm backdrop-blur-sm transition border border-white/20">
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="copy-report-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-xs sm:text-sm backdrop-blur-sm transition border border-white/20">
                         <i data-lucide="copy" class="w-4 h-4"></i>
-                        <span>Özeti Kopyala</span>
+                        <span>Günlük Kopyala</span>
                     </button>
-                    <button id="whatsapp-send-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm shadow-md transition">
+                    <button id="whatsapp-send-btn" class="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs sm:text-sm shadow-md transition">
                         <i data-lucide="send" class="w-4 h-4"></i>
-                        <span>Koçuma WhatsApp'tan Gönder</span>
+                        <span>Günlük WhatsApp</span>
+                    </button>
+                    <button id="whatsapp-weekly-btn" class="w-full sm:w-auto flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs sm:text-sm shadow-md transition">
+                        <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                        <span>Haftalık Rapor Gönder</span>
                     </button>
                 </div>
             </div>
@@ -201,6 +205,83 @@
                 <div class="w-full h-3.5 bg-black/20 rounded-full overflow-hidden p-0.5">
                     <div id="daily-progress-bar" class="h-full bg-gradient-to-r from-amber-300 to-emerald-300 rounded-full transition-all duration-500" style="width: 0%"></div>
                 </div>
+            </div>
+        </section>
+
+        <!-- HAFTALIK ÇİZELGE VE TAKİP BÖLÜMÜ (PAZARTESİ - PAZAR) -->
+        <section class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sm:p-6 space-y-5">
+            <!-- Hafta Seçici Üst Bar -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <div class="p-2 bg-brand-50 text-brand-600 rounded-xl">
+                            <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base sm:text-lg font-extrabold text-slate-900">Haftalık Çalışma Çizelgesi</h2>
+                            <p class="text-xs text-slate-500">Pazartesi – Pazar arası haftalık ders ve soru matrisi</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarih Navigasyonu -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="prev-week-btn" class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1 transition">
+                        <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                        <span>Önceki Hafta</span>
+                    </button>
+
+                    <div class="px-4 py-2 rounded-xl bg-brand-50 border border-brand-200/80 text-brand-700 text-xs sm:text-sm font-extrabold flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-brand-600"></i>
+                        <span id="selected-week-label">16 - 22 Kasım 2026</span>
+                        <span id="current-week-badge" class="px-2 py-0.5 text-[10px] rounded-full bg-brand-600 text-white uppercase tracking-wide">Aktif Hafta</span>
+                    </div>
+
+                    <button id="next-week-btn" class="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold flex items-center gap-1 transition">
+                        <span>Sonraki Hafta</span>
+                        <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                    </button>
+
+                    <button id="reset-week-btn" class="hidden px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold transition">
+                        Bu Haftaya Dön
+                    </button>
+                </div>
+            </div>
+
+            <!-- Görünüm Değiştirici Sekmeler (Matris Tablo / Günlük Kartlar) -->
+            <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/70">
+                    <button type="button" id="tab-matrix-btn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-brand-600 shadow-xs transition flex items-center gap-1.5">
+                        <i data-lucide="table" class="w-3.5 h-3.5"></i>
+                        <span>Ders × Gün Çizelgesi</span>
+                    </button>
+                    <button type="button" id="tab-cards-btn" class="px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+                        <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i>
+                        <span>Günlük Detay Kartları</span>
+                    </button>
+                </div>
+
+                <div class="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                    <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5 text-brand-500"></i>
+                    <span>İlgili güne hızlı kayıt eklemek için gün başlığına veya hücreye tıklayabilirsin.</span>
+                </div>
+            </div>
+
+            <!-- 1. GÖRÜNÜM: DERS × GÜN MATRİS TABLOSU -->
+            <div id="weekly-matrix-view" class="overflow-x-auto rounded-xl border border-slate-200/80">
+                <table class="w-full text-left border-collapse min-w-[760px]">
+                    <thead id="weekly-matrix-head" class="bg-slate-50 border-b border-slate-200">
+                        <!-- JS ile Pazartesi - Pazar başlıkları oluşturulacak -->
+                    </thead>
+                    <tbody id="weekly-matrix-body" class="divide-y divide-slate-100 text-xs">
+                        <!-- JS ile 6 ders + toplam satırı oluşturulacak -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 2. GÖRÜNÜM: 7 GÜNLÜK DETAY KARTLARI -->
+            <div id="weekly-cards-view" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+                <!-- JS ile 7 günün kartları oluşturulacak -->
             </div>
         </section>
 
@@ -371,12 +452,58 @@
         let records = [];
         let dailyGoal = 100;
         let pendingConfirmAction = null;
+        let weekOffset = 0; // 0: Bu hafta, -1: Geçen hafta, +1: Gelecek hafta
+        let weeklyViewMode = 'matrix'; // 'matrix' veya 'cards'
 
-        // --- YARDIMCI TARİH FONKSİYONLARI ---
+        const MONTHS_TR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+        const MONTHS_SHORT_TR = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+        const DAYS_SHORT_TR = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+        const DAYS_FULL_TR = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
+
+        // --- YARDIMCI TARİH VE HAFTA HESAPLAMA FONKSİYONLARI ---
+        function dateToStr(dateObj) {
+            const offset = dateObj.getTimezoneOffset() * 60000;
+            return new Date(dateObj.getTime() - offset).toISOString().split('T')[0];
+        }
+
         function getTodayStr() {
+            return dateToStr(new Date());
+        }
+
+        // Seçili offset'e göre Pazartesi - Pazar arasındaki 7 günü döndürür
+        function getWeekDays(offsetWeeks = 0) {
             const now = new Date();
-            const offset = now.getTimezoneOffset() * 60000;
-            return new Date(now.getTime() - offset).toISOString().split('T')[0];
+            const dayOfWeek = now.getDay(); // 0: Pazar, 1: Pazartesi ... 6: Cumartesi
+            const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+            const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMonday + (offsetWeeks * 7));
+            const days = [];
+
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+                days.push({
+                    dateStr: dateToStr(d),
+                    dayNum: d.getDate(),
+                    monthIndex: d.getMonth(),
+                    year: d.getFullYear(),
+                    shortName: DAYS_SHORT_TR[i],
+                    fullName: DAYS_FULL_TR[i],
+                    shortLabel: `${d.getDate()} ${MONTHS_SHORT_TR[d.getMonth()]}`
+                });
+            }
+            return days;
+        }
+
+        // Hafta aralığını okunaklı metin yapar (Örn: "16 - 22 Kasım 2026" veya "30 Kasım - 6 Aralık 2026")
+        function formatWeekRangeLabel(weekDays, includeYear = true) {
+            const first = weekDays[0];
+            const last = weekDays[6];
+            const yearSuffix = includeYear ? ` ${last.year}` : '';
+
+            if (first.monthIndex === last.monthIndex) {
+                return `${first.dayNum} - ${last.dayNum} ${MONTHS_TR[last.monthIndex]}${yearSuffix}`;
+            }
+            return `${first.dayNum} ${MONTHS_TR[first.monthIndex]} - ${last.dayNum} ${MONTHS_TR[last.monthIndex]}${yearSuffix}`;
         }
 
         function formatDateTR(dateStr) {
@@ -384,22 +511,13 @@
             const today = getTodayStr();
             const yesterdayDate = new Date();
             yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-            const offset = yesterdayDate.getTimezoneOffset() * 60000;
-            const yesterday = new Date(yesterdayDate.getTime() - offset).toISOString().split('T')[0];
+            const yesterday = dateToStr(yesterdayDate);
 
             if (dateStr === today) return 'Bugün';
             if (dateStr === yesterday) return 'Dün';
 
             const parts = dateStr.split('-');
-            const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
-            return `${parseInt(parts[2], 10)} ${months[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
-        }
-
-        function isWithinLast7Days(dateStr) {
-            const target = new Date(dateStr + 'T00:00:00');
-            const today = new Date(getTodayStr() + 'T00:00:00');
-            const diffDays = (today - target) / (1000 * 60 * 60 * 24);
-            return diffDays >= 0 && diffDays < 7;
+            return `${parseInt(parts[2], 10)} ${MONTHS_SHORT_TR[parseInt(parts[1], 10) - 1]} ${parts[0]}`;
         }
 
         function formatDuration(minutes) {
@@ -545,7 +663,12 @@
         function renderStats() {
             const today = getTodayStr();
             const todayRecords = records.filter(r => r.date === today);
-            const weekRecords = records.filter(r => isWithinLast7Days(r.date));
+
+            // Seçili haftanın (Pazartesi - Pazar) kayıtları
+            const activeWeekDays = getWeekDays(weekOffset);
+            const weekStartStr = activeWeekDays[0].dateStr;
+            const weekEndStr = activeWeekDays[6].dateStr;
+            const weekRecords = records.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
 
             // Bugün Hesaplamaları
             const todayTotalQ = todayRecords.reduce((sum, r) => sum + r.total, 0);
@@ -553,7 +676,7 @@
             const todayMinutes = todayRecords.reduce((sum, r) => sum + r.duration, 0);
             const todayAccuracy = todayTotalQ > 0 ? Math.round((todayCorrectQ / todayTotalQ) * 100) : 0;
 
-            // Haftalık Hesaplamalar
+            // Seçili Hafta Hesaplamaları
             const weekTotalQ = weekRecords.reduce((sum, r) => sum + r.total, 0);
             const weekMinutes = weekRecords.reduce((sum, r) => sum + r.duration, 0);
 
@@ -570,6 +693,7 @@
             document.getElementById('stat-today-hours').textContent = `${(todayMinutes / 60).toFixed(1)} Saat`;
 
             document.getElementById('stat-week-questions').textContent = weekTotalQ;
+            document.getElementById('stat-week-range-q').textContent = formatWeekRangeLabel(activeWeekDays, false);
             document.getElementById('stat-week-time').textContent = `${(weekMinutes / 60).toFixed(1)} sa`;
             document.getElementById('stat-week-minutes').textContent = `${weekMinutes} dakika`;
 
@@ -586,6 +710,233 @@
                 statusEl.textContent = `Hedefe ${dailyGoal - todayTotalQ} soru kaldı, devam!`;
             } else {
                 statusEl.textContent = 'Bugünkü ilk kaydını girerek seriyi başlat!';
+            }
+        }
+
+        // --- HAFTALIK ÇİZELGE (MATRİS & GÜNLÜK KARTLAR) RENDER ---
+        function renderWeeklySchedule() {
+            const weekDays = getWeekDays(weekOffset);
+            const today = getTodayStr();
+            const weekStartStr = weekDays[0].dateStr;
+            const weekEndStr = weekDays[6].dateStr;
+            const weekRecords = records.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
+
+            // Hafta başlık ve rozet güncellemesi
+            document.getElementById('selected-week-label').textContent = formatWeekRangeLabel(weekDays, true);
+            const badgeEl = document.getElementById('current-week-badge');
+            const resetBtn = document.getElementById('reset-week-btn');
+
+            if (weekOffset === 0) {
+                badgeEl.textContent = 'Bu Hafta';
+                badgeEl.className = 'px-2 py-0.5 text-[10px] rounded-full bg-brand-600 text-white uppercase tracking-wide';
+                resetBtn.classList.add('hidden');
+            } else if (weekOffset < 0) {
+                badgeEl.textContent = `${Math.abs(weekOffset)} Hafta Önce`;
+                badgeEl.className = 'px-2 py-0.5 text-[10px] rounded-full bg-slate-500 text-white uppercase tracking-wide';
+                resetBtn.classList.remove('hidden');
+            } else {
+                badgeEl.textContent = `${weekOffset} Hafta Sonra`;
+                badgeEl.className = 'px-2 py-0.5 text-[10px] rounded-full bg-amber-500 text-white uppercase tracking-wide';
+                resetBtn.classList.remove('hidden');
+            }
+
+            // 1. MATRİS TABLO BAŞLIĞI (Pazartesi - Pazar + Toplam)
+            const thead = document.getElementById('weekly-matrix-head');
+            thead.innerHTML = `
+                <tr>
+                    <th class="py-3 px-4 font-extrabold text-slate-700 text-xs uppercase tracking-wider sticky left-0 bg-slate-50 z-10 min-w-[165px]">Dersler</th>
+                    ${weekDays.map(d => {
+                        const isToday = d.dateStr === today;
+                        return `
+                            <th onclick="quickAddForDate('${d.dateStr}')" class="py-2.5 px-2 text-center cursor-pointer transition group ${isToday ? 'bg-brand-50/90 text-brand-700' : 'hover:bg-slate-100 text-slate-700'}" title="Bu güne kayıt eklemek için tıkla">
+                                <div class="text-[11px] font-extrabold ${isToday ? 'text-brand-700' : 'text-slate-800'}">${d.fullName}</div>
+                                <div class="text-[11px] font-medium ${isToday ? 'text-brand-600 font-bold' : 'text-slate-500'}">${d.shortLabel}</div>
+                                ${isToday ? '<span class="inline-block mt-0.5 px-1.5 py-0.2 bg-brand-600 text-white text-[9px] font-bold rounded-full">BUGÜN</span>' : '<span class="inline-block mt-0.5 text-[9px] text-brand-500 opacity-0 group-hover:opacity-100 font-semibold">+ Ekle</span>'}
+                            </th>
+                        `;
+                    }).join('')}
+                    <th class="py-3 px-3 text-center font-extrabold text-slate-800 text-xs uppercase tracking-wider bg-slate-100/80 min-w-[95px]">Haftalık</th>
+                </tr>
+            `;
+
+            // 2. MATRİS TABLO GÖVDESİ (6 Ders Satırı + Günlük Toplam Satırı)
+            const tbody = document.getElementById('weekly-matrix-body');
+            const subjectRowsHtml = SUBJECTS.map(sub => {
+                let rowTotalQ = 0;
+                let rowTotalMin = 0;
+
+                const dayCells = weekDays.map(d => {
+                    const isToday = d.dateStr === today;
+                    const cellRecs = weekRecords.filter(r => r.date === d.dateStr && r.subject === sub.name);
+                    const q = cellRecs.reduce((s, r) => s + r.total, 0);
+                    const m = cellRecs.reduce((s, r) => s + r.duration, 0);
+                    rowTotalQ += q;
+                    rowTotalMin += m;
+
+                    if (q === 0) {
+                        return `
+                            <td onclick="quickAddForDate('${d.dateStr}', '${sub.name}')" class="py-2.5 px-2 text-center cursor-pointer transition ${isToday ? 'bg-brand-50/30 hover:bg-brand-50' : 'hover:bg-slate-50'}">
+                                <span class="text-slate-300 font-medium">—</span>
+                            </td>
+                        `;
+                    }
+
+                    return `
+                        <td onclick="quickAddForDate('${d.dateStr}', '${sub.name}')" class="py-2.5 px-2 text-center cursor-pointer transition ${isToday ? 'bg-brand-50/40 hover:bg-brand-100/50' : 'hover:bg-slate-50'}">
+                            <div class="inline-flex flex-col items-center px-2 py-1 rounded-lg ${sub.bgLight} ${sub.text} border ${sub.border}">
+                                <span class="font-extrabold text-xs">${q} s</span>
+                                <span class="text-[10px] opacity-80">${m} dk</span>
+                            </div>
+                        </td>
+                    `;
+                }).join('');
+
+                return `
+                    <tr class="hover:bg-slate-50/60 transition">
+                        <td class="py-3 px-4 font-bold text-slate-800 sticky left-0 bg-white z-10 border-r border-slate-100">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full ${sub.color} shrink-0"></span>
+                                <span>${sub.name}</span>
+                            </div>
+                        </td>
+                        ${dayCells}
+                        <td class="py-3 px-3 text-center bg-slate-50/80 font-bold border-l border-slate-100">
+                            <div class="text-slate-900 text-xs font-extrabold">${rowTotalQ} soru</div>
+                            <div class="text-[10px] text-slate-500 font-medium">${rowTotalMin} dk</div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Günlük Toplam Özet Satırı
+            let grandTotalQ = 0;
+            let grandTotalMin = 0;
+            const summaryCells = weekDays.map(d => {
+                const isToday = d.dateStr === today;
+                const dayRecs = weekRecords.filter(r => r.date === d.dateStr);
+                const dayQ = dayRecs.reduce((s, r) => s + r.total, 0);
+                const dayMin = dayRecs.reduce((s, r) => s + r.duration, 0);
+                grandTotalQ += dayQ;
+                grandTotalMin += dayMin;
+
+                const goalMet = dayQ >= dailyGoal;
+                return `
+                    <td class="py-3 px-2 text-center ${isToday ? 'bg-brand-100/50' : 'bg-slate-100/70'}">
+                        <div class="font-extrabold text-xs ${goalMet ? 'text-emerald-700' : 'text-slate-900'}">${dayQ} s ${goalMet ? '✓' : ''}</div>
+                        <div class="text-[10px] font-semibold text-slate-500">${formatDuration(dayMin)}</div>
+                    </td>
+                `;
+            }).join('');
+
+            const summaryRowHtml = `
+                <tr class="border-t-2 border-slate-200 bg-slate-100/70 font-bold">
+                    <td class="py-3 px-4 text-slate-900 font-extrabold sticky left-0 bg-slate-100 z-10">GÜNLÜK TOPLAM</td>
+                    ${summaryCells}
+                    <td class="py-3 px-3 text-center bg-brand-600 text-white">
+                        <div class="font-extrabold text-xs">${grandTotalQ} soru</div>
+                        <div class="text-[10px] text-indigo-100">${formatDuration(grandTotalMin)}</div>
+                    </td>
+                </tr>
+            `;
+
+            tbody.innerHTML = subjectRowsHtml + summaryRowHtml;
+
+            // 3. GÜNLÜK DETAY KARTLARI (7 Günlük Kolonlar)
+            const cardsContainer = document.getElementById('weekly-cards-view');
+            cardsContainer.innerHTML = weekDays.map(d => {
+                const isToday = d.dateStr === today;
+                const dayRecs = weekRecords.filter(r => r.date === d.dateStr);
+                const dayQ = dayRecs.reduce((s, r) => s + r.total, 0);
+                const dayMin = dayRecs.reduce((s, r) => s + r.duration, 0);
+                const goalPercent = Math.min(100, Math.round((dayQ / dailyGoal) * 100));
+
+                return `
+                    <div class="rounded-2xl border p-3.5 flex flex-col justify-between transition ${isToday ? 'border-brand-400 bg-brand-50/30 ring-2 ring-brand-500/15' : 'border-slate-200/80 bg-slate-50/40'}">
+                        <div>
+                            <div class="flex items-center justify-between mb-2 pb-2 border-b border-slate-200/60">
+                                <div>
+                                    <div class="font-extrabold text-xs ${isToday ? 'text-brand-700' : 'text-slate-800'}">${d.fullName}</div>
+                                    <div class="text-[11px] font-medium text-slate-500">${d.shortLabel}</div>
+                                </div>
+                                ${isToday ? '<span class="px-2 py-0.5 rounded-full bg-brand-600 text-white text-[10px] font-bold">Bugün</span>' : ''}
+                            </div>
+
+                            <!-- Gün Özeti -->
+                            <div class="mb-3">
+                                <div class="flex items-baseline justify-between">
+                                    <span class="text-lg font-extrabold text-slate-900">${dayQ} <span class="text-xs font-semibold text-slate-500">soru</span></span>
+                                    <span class="text-[11px] font-semibold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md">${formatDuration(dayMin)}</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mt-1.5">
+                                    <div class="h-full ${dayQ >= dailyGoal ? 'bg-emerald-500' : 'bg-brand-500'} rounded-full" style="width: ${goalPercent}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- O Günün Ders Kayıtları -->
+                            <div class="space-y-1.5 mb-3 max-h-44 overflow-y-auto">
+                                ${dayRecs.length === 0
+                                    ? '<p class="text-[11px] text-slate-400 italic py-2 text-center">Kayıt girilmedi</p>'
+                                    : dayRecs.map(rec => {
+                                        const subObj = SUBJECTS.find(s => s.name === rec.subject) || SUBJECTS[0];
+                                        return `
+                                            <div class="p-2 rounded-xl bg-white border border-slate-200/80 text-[11px] shadow-2xs">
+                                                <div class="flex items-center justify-between font-bold text-slate-800">
+                                                    <span class="truncate pr-1 flex items-center gap-1">
+                                                        <span class="w-2 h-2 rounded-full ${subObj.color} shrink-0"></span>
+                                                        ${rec.subject}
+                                                    </span>
+                                                    <span class="text-brand-600 shrink-0">${rec.total}s</span>
+                                                </div>
+                                                <div class="flex items-center justify-between text-[10px] text-slate-500 mt-0.5">
+                                                    <span>${rec.correct}D ${rec.wrong}Y • ${rec.duration}dk</span>
+                                                    <div class="flex items-center gap-1">
+                                                        <button onclick="editRecord('${rec.id}')" class="hover:text-brand-600" title="Düzenle">✎</button>
+                                                        <button onclick="deleteRecord('${rec.id}')" class="hover:text-rose-600" title="Sil">✕</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')
+                                }
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="quickAddForDate('${d.dateStr}')" class="w-full py-2 rounded-xl border border-dashed border-brand-300 hover:border-brand-500 hover:bg-brand-50 text-brand-600 font-bold text-[11px] transition flex items-center justify-center gap-1">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>Bu Güne Ekle</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        // Çizelgedeki herhangi bir güne/derse tıklayınca formu o tarihe hazırlar
+        function quickAddForDate(dateStr, subjectName = null) {
+            resetForm();
+            document.getElementById('study-date').value = dateStr;
+            if (subjectName) {
+                selectSubject(subjectName);
+            }
+            document.getElementById('study-duration').focus();
+            document.getElementById('study-form').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showToast(`${formatDateTR(dateStr)} için çalışma girişi hazırlandı.`, 'info');
+        }
+
+        // --- DERS BAZLI İLERLEME BARLARI ---
+        function renderSubjectBreakdown() {
+            const filter = document.getElementById('chart-filter').value;
+            const today = getTodayStr();
+            const activeWeekDays = getWeekDays(weekOffset);
+            const weekStartStr = activeWeekDays[0].dateStr;
+            const weekEndStr = activeWeekDays[6].dateStr;
+
+            let filtered = records;
+            if (filter === 'today') {
+                filtered = records.filter(r => r.date === today);
+            } else if (filter === 'week') {
+                filtered = records.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
             }
         }
 
@@ -739,6 +1090,7 @@
         // --- TÜM ARAYÜZÜ YENİLE ---
         function refreshUI() {
             renderStats();
+            renderWeeklySchedule();
             renderSubjectBreakdown();
             renderBadges();
             renderRecordsList();
@@ -847,19 +1199,48 @@
             return lines.join('\n');
         }
 
-        function copyTextFallback(text) {
-            const textArea = document.createElement('textarea');
-            textArea.value = text;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-9999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                showToast('Günlük özet panoya kopyalandı! WhatsApp’a yapıştırabilirsin.');
-            } catch (err) {
-                showToast('Kopyalama başarısız oldu.', 'error');
-            }
+        // --- SEÇİLİ HAFTA İÇİN WHATSAPP RAPORU OLUŞTURMA ---
+        function generateWeeklyReportText() {
+            const weekDays = getWeekDays(weekOffset);
+            const weekLabel = formatWeekRangeLabel(weekDays, true);
+            const weekStartStr = weekDays[0].dateStr;
+            const weekEndStr = weekDays[6].dateStr;
+            const weekRecords = records.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
+
+            const totalQ = weekRecords.reduce((s, r) => s + r.total, 0);
+            const totalC = weekRecords.reduce((s, r) => s + r.correct, 0);
+            const totalW = weekRecords.reduce((s, r) => s + r.wrong, 0);
+            const totalMin = weekRecords.reduce((s, r) => s + r.duration, 0);
+
+            let lines = [
+                `Merhaba Hocam! 👋`,
+                `📆 *${weekLabel} LGS Haftalık Çizelge Raporum*`,
+                `⏱️ Haftalık Toplam Süre: *${formatDuration(totalMin)}*`,
+                `📝 Haftalık Toplam Soru: *${totalQ} Soru* (${totalC}D / ${totalW}Y)`,
+                ``,
+                `📅 *Günlük Dağılım:*`
+            ];
+
+            weekDays.forEach(d => {
+                const dRecs = weekRecords.filter(r => r.date === d.dateStr);
+                const dq = dRecs.reduce((s, r) => s + r.total, 0);
+                const dm = dRecs.reduce((s, r) => s + r.duration, 0);
+                lines.push(`• *${d.shortName} (${d.shortLabel}):* ${dq} soru (${dm} dk)`);
+            });
+
+            lines.push(``, `📚 *Haftalık Ders Toplamları:*`);
+            SUBJECTS.forEach(sub => {
+                const sRecs = weekRecords.filter(r => r.subject === sub.name);
+                const sq = sRecs.reduce((s, r) => s + r.total, 0);
+                if (sq > 0) {
+                    const sc = sRecs.reduce((s, r) => s + r.correct, 0);
+                    const sw = sRecs.reduce((s, r) => s + r.wrong, 0);
+                    lines.push(`• *${sub.name}:* ${sq} soru (${sc}D/${sw}Y)`);
+                }
+            });
+
+            return lines.join('\n');
+        }
             document.body.removeChild(textArea);
         }
 
@@ -948,12 +1329,48 @@
                 window.open(`https://wa.me/?text=${encoded}`, '_blank');
             });
 
-            // Hedef Modalı İşlemleri
-            const goalModal = document.getElementById('goal-modal');
-            document.getElementById('open-goal-btn').addEventListener('click', () => {
-                document.getElementById('daily-goal-input').value = dailyGoal;
-                goalModal.classList.remove('hidden');
-                goalModal.classList.add('flex');
+            document.getElementById('whatsapp-weekly-btn').addEventListener('click', () => {
+                const report = generateWeeklyReportText();
+                const encoded = encodeURIComponent(report);
+                window.open(`https://wa.me/?text=${encoded}`, '_blank');
+            });
+
+            // Hafta Navigasyon Butonları
+            document.getElementById('prev-week-btn').addEventListener('click', () => {
+                weekOffset--;
+                refreshUI();
+            });
+
+            document.getElementById('next-week-btn').addEventListener('click', () => {
+                weekOffset++;
+                refreshUI();
+            });
+
+            document.getElementById('reset-week-btn').addEventListener('click', () => {
+                weekOffset = 0;
+                refreshUI();
+            });
+
+            // Haftalık Görünüm Sekmeleri (Matris Tablo vs Günlük Kartlar)
+            const tabMatrixBtn = document.getElementById('tab-matrix-btn');
+            const tabCardsBtn = document.getElementById('tab-cards-btn');
+            const matrixView = document.getElementById('weekly-matrix-view');
+            const cardsView = document.getElementById('weekly-cards-view');
+
+            tabMatrixBtn.addEventListener('click', () => {
+                weeklyViewMode = 'matrix';
+                matrixView.classList.remove('hidden');
+                cardsView.classList.add('hidden');
+                tabMatrixBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-brand-600 shadow-xs transition flex items-center gap-1.5';
+                tabCardsBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5';
+            });
+
+            tabCardsBtn.addEventListener('click', () => {
+                weeklyViewMode = 'cards';
+                cardsView.classList.remove('hidden');
+                matrixView.classList.add('hidden');
+                tabCardsBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-brand-600 shadow-xs transition flex items-center gap-1.5';
+                tabMatrixBtn.className = 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5';
             });
 
             document.getElementById('close-goal-modal').addEventListener('click', () => {
